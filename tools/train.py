@@ -8,7 +8,7 @@ import argparse
 import os
 import pprint
 import shutil
-import sys
+
 
 import logging
 import time
@@ -22,23 +22,26 @@ import torch.nn as nn
 import torch.backends.cudnn as cudnn
 import torch.optim
 from tensorboardX import SummaryWriter
-
-import _init_paths
-import models
-import datasets
+import sys
+sys.path.append("../lib")
 from config import config
 from config import update_config
 from core.criterion import CrossEntropy, OhemCrossEntropy
 from core.function import train, validate
 from utils.modelsummary import get_model_summary
 from utils.utils import create_logger, FullModel
+import _init_paths
+import models
+import datasets
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train segmentation network')
     
     parser.add_argument('--cfg',
                         help='experiment configure file name',
-                        required=True,
+                        # required=True,
+                        default=r"..\experiments\cityscapes\seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml",
                         type=str)
     parser.add_argument('--seed', type=int, default=304)
     parser.add_argument("--local_rank", type=int, default=-1)       
@@ -98,6 +101,8 @@ def main():
     model = eval('models.'+config.MODEL.NAME +
                  '.get_seg_model')(config)
 
+    x = torch.randn((2, 3, 768, 1024),device="cpu")
+    y = model(x)    #output is list[2 items] everyone's shape is (4, 19, 128, 256)
     # dump_input = torch.rand(
     #     (1, 3, config.TRAIN.IMAGE_SIZE[1], config.TRAIN.IMAGE_SIZE[0])
     # )
