@@ -52,6 +52,7 @@ _C.LOSS.OHEMTHRES = 0.9
 _C.LOSS.OHEMKEEP = 100000
 _C.LOSS.CLASS_BALANCE = False
 _C.LOSS.BALANCE_WEIGHTS = [1]
+_C.LOSS.CLASS_WEIGHT = []
 
 # DATASET related params
 _C.DATASET = CN()
@@ -61,6 +62,8 @@ _C.DATASET.NUM_CLASSES = 19
 _C.DATASET.TRAIN_SET = 'list/cityscapes/train.lst'
 _C.DATASET.EXTRA_TRAIN_SET = ''
 _C.DATASET.TEST_SET = 'list/cityscapes/val.lst'
+_C.DATASET.IMAGE_DIR = "D:\Code\data\sewage\small_dataset\small_img"
+_C.DATASET.MASK_DIR = "D:\Code\data\sewage\small_dataset\small_label"
 
 # training
 _C.TRAIN = CN()

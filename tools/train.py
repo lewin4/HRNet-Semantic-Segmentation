@@ -9,7 +9,6 @@ import os
 import pprint
 import shutil
 
-
 import logging
 import time
 import timeit
@@ -23,6 +22,7 @@ import torch.backends.cudnn as cudnn
 import torch.optim
 from tensorboardX import SummaryWriter
 import sys
+
 sys.path.append("../lib")
 from config import config
 from config import update_config
@@ -37,14 +37,14 @@ import datasets
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train segmentation network')
-    
+
     parser.add_argument('--cfg',
                         help='experiment configure file name',
                         # required=True,
                         default=r"..\experiments\cityscapes\seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml",
                         type=str)
     parser.add_argument('--seed', type=int, default=304)
-    parser.add_argument("--local_rank", type=int, default=-1)       
+    parser.add_argument("--local_rank", type=int, default=-1)
     parser.add_argument('opts',
                         help="Modify config options using the command-line",
                         default=None,
@@ -55,6 +55,7 @@ def parse_args():
 
     return args
 
+
 def get_sampler(dataset):
     from utils.distributed import is_distributed
     if is_distributed():
@@ -63,6 +64,7 @@ def get_sampler(dataset):
     else:
         return None
 
+
 def main():
     args = parse_args()
 
@@ -70,7 +72,7 @@ def main():
         import random
         print('Seeding with', args.seed)
         random.seed(args.seed)
-        torch.manual_seed(args.seed)        
+        torch.manual_seed(args.seed)
 
     logger, final_output_dir, tb_log_dir = create_logger(
         config, args.cfg, 'train')
@@ -91,18 +93,20 @@ def main():
     gpus = list(config.GPUS)
     distributed = args.local_rank >= 0
     if distributed:
-        device = torch.device('cuda:{}'.format(args.local_rank))    
+        device = torch.device('cuda:{}'.format(args.local_rank))
         torch.cuda.set_device(device)
         torch.distributed.init_process_group(
             backend="nccl", init_method="env://",
-        )        
+        )
+    else:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # build model
-    model = eval('models.'+config.MODEL.NAME +
+        # build model
+    model = eval('models.' + config.MODEL.NAME +
                  '.get_seg_model')(config)
 
-    x = torch.randn((2, 3, 768, 1024),device="cpu")
-    y = model(x)    #output is list[2 items] everyone's shape is (4, 19, 128, 256)
+    # x = torch.randn((2, 3, 768, 1024),device="cpu")
+    # y = model(x)    #output is list[2 items] everyone's shape is (4, 19, 128, 256)
     # dump_input = torch.rand(
     #     (1, 3, config.TRAIN.IMAGE_SIZE[1], config.TRAIN.IMAGE_SIZE[0])
     # )
@@ -123,28 +127,28 @@ def main():
 
     # prepare data
     crop_size = (config.TRAIN.IMAGE_SIZE[1], config.TRAIN.IMAGE_SIZE[0])
-    train_dataset = eval('datasets.'+config.DATASET.DATASET)(
-                        root=config.DATASET.ROOT,
-                        list_path=config.DATASET.TRAIN_SET,
-                        num_samples=None,
-                        num_classes=config.DATASET.NUM_CLASSES,
-                        multi_scale=config.TRAIN.MULTI_SCALE,
-                        flip=config.TRAIN.FLIP,
-                        ignore_label=config.TRAIN.IGNORE_LABEL,
-                        base_size=config.TRAIN.BASE_SIZE,
-                        crop_size=crop_size,
-                        downsample_rate=config.TRAIN.DOWNSAMPLERATE,
-                        scale_factor=config.TRAIN.SCALE_FACTOR)
-
-    train_sampler = get_sampler(train_dataset)
-    trainloader = torch.utils.data.DataLoader(
-        train_dataset,
-        batch_size=batch_size,
-        shuffle=config.TRAIN.SHUFFLE and train_sampler is None,
-        num_workers=config.WORKERS,
-        pin_memory=True,
-        drop_last=True,
-        sampler=train_sampler)
+    # train_dataset = eval('datasets.'+config.DATASET.DATASET)(
+    #                     root=config.DATASET.ROOT,
+    #                     list_path=config.DATASET.TRAIN_SET,
+    #                     num_samples=None,
+    #                     num_classes=config.DATASET.NUM_CLASSES,
+    #                     multi_scale=config.TRAIN.MULTI_SCALE,
+    #                     flip=config.TRAIN.FLIP,
+    #                     ignore_label=config.TRAIN.IGNORE_LABEL,
+    #                     base_size=config.TRAIN.BASE_SIZE,
+    #                     crop_size=crop_size,
+    #                     downsample_rate=config.TRAIN.DOWNSAMPLERATE,
+    #                     scale_factor=config.TRAIN.SCALE_FACTOR)
+    #
+    # train_sampler = get_sampler(train_dataset)
+    # trainloader = torch.utils.data.DataLoader(
+    #     train_dataset,
+    #     batch_size=batch_size,
+    #     shuffle=config.TRAIN.SHUFFLE and train_sampler is None,
+    #     num_workers=config.WORKERS,
+    #     pin_memory=True,
+    #     drop_last=True,
+    #     sampler=train_sampler)
 
     extra_epoch_iters = 0
     if config.DATASET.EXTRA_TRAIN_SET:
@@ -169,41 +173,48 @@ def main():
             pin_memory=True,
             drop_last=True,
             sampler=extra_train_sampler)
-        extra_epoch_iters = np.int(extra_train_dataset.__len__() / 
+        extra_epoch_iters = np.int(extra_train_dataset.__len__() /
                         config.TRAIN.BATCH_SIZE_PER_GPU / len(gpus))
 
+    # test_size = (config.TEST.IMAGE_SIZE[1], config.TEST.IMAGE_SIZE[0])
+    # test_dataset = eval('datasets.'+config.DATASET.DATASET)(
+    #                     root=config.DATASET.ROOT,
+    #                     list_path=config.DATASET.TEST_SET,
+    #                     num_samples=config.TEST.NUM_SAMPLES,
+    #                     num_classes=config.DATASET.NUM_CLASSES,
+    #                     multi_scale=False,
+    #                     flip=False,
+    #                     ignore_label=config.TRAIN.IGNORE_LABEL,
+    #                     base_size=config.TEST.BASE_SIZE,
+    #                     crop_size=test_size,
+    #                     downsample_rate=1)
+    #
+    # test_sampler = get_sampler(test_dataset)
+    # testloader = torch.utils.data.DataLoader(
+    #     test_dataset,
+    #     batch_size=batch_size,
+    #     shuffle=False,
+    #     num_workers=config.WORKERS,
+    #     pin_memory=True,
+    #     sampler=test_sampler)
 
-    test_size = (config.TEST.IMAGE_SIZE[1], config.TEST.IMAGE_SIZE[0])
-    test_dataset = eval('datasets.'+config.DATASET.DATASET)(
-                        root=config.DATASET.ROOT,
-                        list_path=config.DATASET.TEST_SET,
-                        num_samples=config.TEST.NUM_SAMPLES,
-                        num_classes=config.DATASET.NUM_CLASSES,
-                        multi_scale=False,
-                        flip=False,
-                        ignore_label=config.TRAIN.IGNORE_LABEL,
-                        base_size=config.TEST.BASE_SIZE,
-                        crop_size=test_size,
-                        downsample_rate=1)
-
-    test_sampler = get_sampler(test_dataset)
-    testloader = torch.utils.data.DataLoader(
-        test_dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=config.WORKERS,
-        pin_memory=True,
-        sampler=test_sampler)
+    trainloader, valloader = eval('datasets.' + config.DATASET.DATASET + ".get_loaders")(
+                                image_dir = config.DATASET.IMAGE_DIR,
+                                mask_dir = config.DATASET.MASK_DIR,
+                                batch_size = batch_size,
+                                num_worker = config.WORKERS,
+                                pin_memory = True,
+                                img_shape = crop_size)
 
     # criterion
     if config.LOSS.USE_OHEM:
         criterion = OhemCrossEntropy(ignore_label=config.TRAIN.IGNORE_LABEL,
-                                        thres=config.LOSS.OHEMTHRES,
-                                        min_kept=config.LOSS.OHEMKEEP,
-                                        weight=train_dataset.class_weights)
+                                     thres=config.LOSS.OHEMTHRES,
+                                     min_kept=config.LOSS.OHEMKEEP,
+                                     weight=config.LOSS.CLASS_WEIGHT)
     else:
         criterion = CrossEntropy(ignore_label=config.TRAIN.IGNORE_LABEL,
-                                    weight=train_dataset.class_weights)
+                                 weight=config.LOSS.CLASS_WEIGHT)
 
     model = FullModel(model, criterion)
     if distributed:
@@ -215,8 +226,7 @@ def main():
             output_device=args.local_rank
         )
     else:
-        model = nn.DataParallel(model, device_ids=gpus).cuda()
-    
+        model = nn.DataParallel(model, device_ids=gpus).to(device)
 
     # optimizer
     if config.TRAIN.OPTIMIZER == 'sgd':
@@ -233,22 +243,22 @@ def main():
                 else:
                     bb_lr.append(param)
             print(nbb_keys)
-            params = [{'params': bb_lr, 'lr': config.TRAIN.LR}, {'params': nbb_lr, 'lr': config.TRAIN.LR * config.TRAIN.NONBACKBONE_MULT}]
+            params = [{'params': bb_lr, 'lr': config.TRAIN.LR},
+                      {'params': nbb_lr, 'lr': config.TRAIN.LR * config.TRAIN.NONBACKBONE_MULT}]
         else:
             params = [{'params': list(params_dict.values()), 'lr': config.TRAIN.LR}]
 
         optimizer = torch.optim.SGD(params,
-                                lr=config.TRAIN.LR,
-                                momentum=config.TRAIN.MOMENTUM,
-                                weight_decay=config.TRAIN.WD,
-                                nesterov=config.TRAIN.NESTEROV,
-                                )
+                                    lr=config.TRAIN.LR,
+                                    momentum=config.TRAIN.MOMENTUM,
+                                    weight_decay=config.TRAIN.WD,
+                                    nesterov=config.TRAIN.NESTEROV,
+                                    )
     else:
         raise ValueError('Only Support SGD optimizer')
 
-    epoch_iters = np.int(train_dataset.__len__() / 
-                        config.TRAIN.BATCH_SIZE_PER_GPU / len(gpus))
-        
+    epoch_iters = np.int(len(trainloader))
+
     best_mIoU = 0
     last_epoch = 0
     if config.TRAIN.RESUME:
@@ -259,8 +269,9 @@ def main():
             best_mIoU = checkpoint['best_mIoU']
             last_epoch = checkpoint['epoch']
             dct = checkpoint['state_dict']
-            
-            model.module.model.load_state_dict({k.replace('model.', ''): v for k, v in checkpoint['state_dict'].items() if k.startswith('model.')})
+
+            model.module.model.load_state_dict(
+                {k.replace('model.', ''): v for k, v in checkpoint['state_dict'].items() if k.startswith('model.')})
             optimizer.load_state_dict(checkpoint['optimizer'])
             logger.info("=> loaded checkpoint (epoch {})"
                         .format(checkpoint['epoch']))
@@ -271,7 +282,7 @@ def main():
     end_epoch = config.TRAIN.END_EPOCH + config.TRAIN.EXTRA_EPOCH
     num_iters = config.TRAIN.END_EPOCH * epoch_iters
     extra_iters = config.TRAIN.EXTRA_EPOCH * extra_epoch_iters
-    
+
     for epoch in range(last_epoch, end_epoch):
 
         current_trainloader = extra_trainloader if epoch >= config.TRAIN.END_EPOCH else trainloader
@@ -282,44 +293,43 @@ def main():
         #             testloader, model, writer_dict)
 
         if epoch >= config.TRAIN.END_EPOCH:
-            train(config, epoch-config.TRAIN.END_EPOCH, 
-                  config.TRAIN.EXTRA_EPOCH, extra_epoch_iters, 
-                  config.TRAIN.EXTRA_LR, extra_iters, 
-                  extra_trainloader, optimizer, model, writer_dict)
+            train(config, epoch - config.TRAIN.END_EPOCH,
+                  config.TRAIN.EXTRA_EPOCH, extra_epoch_iters,
+                  config.TRAIN.EXTRA_LR, extra_iters,
+                  extra_trainloader, optimizer, model, writer_dict, device)
         else:
-            train(config, epoch, config.TRAIN.END_EPOCH, 
+            train(config, epoch, config.TRAIN.END_EPOCH,
                   epoch_iters, config.TRAIN.LR, num_iters,
-                  trainloader, optimizer, model, writer_dict)
+                  trainloader, optimizer, model, writer_dict, device)
 
-        valid_loss, mean_IoU, IoU_array = validate(config, 
-                    testloader, model, writer_dict)
+        valid_loss, mean_IoU, IoU_array = validate(config, epoch,
+                                                   valloader, model, writer_dict, device)
 
         if args.local_rank <= 0:
             logger.info('=> saving checkpoint to {}'.format(
                 final_output_dir + 'checkpoint.pth.tar'))
             torch.save({
-                'epoch': epoch+1,
+                'epoch': epoch + 1,
                 'best_mIoU': best_mIoU,
                 'state_dict': model.module.state_dict(),
                 'optimizer': optimizer.state_dict(),
-            }, os.path.join(final_output_dir,'checkpoint.pth.tar'))
+            }, os.path.join(final_output_dir, 'checkpoint.pth.tar'))
             if mean_IoU > best_mIoU:
                 best_mIoU = mean_IoU
                 torch.save(model.module.state_dict(),
-                        os.path.join(final_output_dir, 'best.pth'))
+                           os.path.join(final_output_dir, 'best.pth'))
             msg = 'Loss: {:.3f}, MeanIU: {: 4.4f}, Best_mIoU: {: 4.4f}'.format(
-                        valid_loss, mean_IoU, best_mIoU)
+                valid_loss, mean_IoU, best_mIoU)
             logging.info(msg)
             logging.info(IoU_array)
 
     if args.local_rank <= 0:
-
         torch.save(model.module.state_dict(),
-                os.path.join(final_output_dir, 'final_state.pth'))
+                   os.path.join(final_output_dir, 'final_state.pth'))
 
         writer_dict['writer'].close()
         end = timeit.default_timer()
-        logger.info('Hours: %d' % np.int((end-start)/3600))
+        logger.info('Hours: %d' % np.int((end - start) / 3600))
         logger.info('Done')
 
 

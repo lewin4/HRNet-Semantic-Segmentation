@@ -15,6 +15,9 @@ class CrossEntropy(nn.Module):
     def __init__(self, ignore_label=-1, weight=None):
         super(CrossEntropy, self).__init__()
         self.ignore_label = ignore_label
+        if weight is not None:
+            weight = torch.FloatTensor(weight)
+
         self.criterion = nn.CrossEntropyLoss(
             weight=weight,
             ignore_index=ignore_label
