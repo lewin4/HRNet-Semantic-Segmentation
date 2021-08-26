@@ -49,7 +49,7 @@ def train(config, epoch, num_epoch, epoch_iters, base_lr,
     writer = writer_dict['writer']
     global_steps = writer_dict['train_global_steps']
 
-    for i_iter, batch in enumerate(tqdm(trainloader, desc=f"Train #{epoch}:"), 0):
+    for i_iter, batch in enumerate(tqdm(trainloader, desc=f"Train #{epoch}"), 0):
         images, labels = batch
         images = images.to(device)
         labels = labels.long().to(device)
@@ -95,7 +95,7 @@ def validate(config, epoch, testloader, model, writer_dict, device):
     confusion_matrix = np.zeros(
         (config.DATASET.NUM_CLASSES, config.DATASET.NUM_CLASSES, nums))
     with torch.no_grad():
-        for idx, batch in enumerate(tqdm(testloader, desc=f"Val #{epoch}:")):
+        for idx, batch in enumerate(tqdm(testloader, desc=f"Val #{epoch}")):
             image, label = batch
             size = label.size()
             image = image.to(device)
