@@ -270,8 +270,9 @@ def main():
             last_epoch = checkpoint['epoch']
             dct = checkpoint['state_dict']
 
-            model.module.model.load_state_dict(
-                {k.replace('model.', ''): v for k, v in checkpoint['state_dict'].items() if k.startswith('model.')})
+            # model.module.model.load_state_dict(
+            #     {k.replace('model.', ''): v for k, v in checkpoint['state_dict'].items() if k.startswith('model.')})
+            model.model.load_state_dict(dct)
             optimizer.load_state_dict(checkpoint['optimizer'])
             logger.info("=> loaded checkpoint (epoch {})"
                         .format(checkpoint['epoch']))
