@@ -216,7 +216,7 @@ def main():
         criterion = CrossEntropy(ignore_label=config.TRAIN.IGNORE_LABEL,
                                  weight=config.LOSS.CLASS_WEIGHT)
 
-    model = FullModel(model, criterion)
+    model = FullModel(model, criterion).to(device)
     if distributed:
         model = model.to(device)
         model = torch.nn.parallel.DistributedDataParallel(
@@ -225,8 +225,8 @@ def main():
             device_ids=[args.local_rank],
             output_device=args.local_rank
         )
-    else:
-        model = nn.DataParallel(model, device_ids=gpus).to(device)
+    # else:
+    #     model = nn.DataParallel(model, device_ids=gpus).to(device)
 
     # optimizer
     if config.TRAIN.OPTIMIZER == 'sgd':
@@ -311,12 +311,12 @@ def main():
             torch.save({
                 'epoch': epoch + 1,
                 'best_mIoU': best_mIoU,
-                'state_dict': model.module.state_dict(),
+                'state_dict': model.model.state_dict(),
                 'optimizer': optimizer.state_dict(),
             }, os.path.join(final_output_dir, 'checkpoint.pth.tar'))
             if mean_IoU > best_mIoU:
                 best_mIoU = mean_IoU
-                torch.save(model.module.state_dict(),
+                torch.save(model.model.state_dict(),
                            os.path.join(final_output_dir, 'best.pth'))
             msg = 'Loss: {:.3f}, MeanIU: {: 4.4f}, Best_mIoU: {: 4.4f}'.format(
                 valid_loss, mean_IoU, best_mIoU)
@@ -324,7 +324,7 @@ def main():
             logging.info(IoU_array)
 
     if args.local_rank <= 0:
-        torch.save(model.module.state_dict(),
+        torch.save(model.model.state_dict(),
                    os.path.join(final_output_dir, 'final_state.pth'))
 
         writer_dict['writer'].close()

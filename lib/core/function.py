@@ -49,7 +49,8 @@ def train(config, epoch, num_epoch, epoch_iters, base_lr,
     writer = writer_dict['writer']
     global_steps = writer_dict['train_global_steps']
 
-    for i_iter, batch in enumerate(tqdm(trainloader, desc=f"Train #{epoch}"), 0):
+    progress_data = tqdm(trainloader, desc=f"Train #{epoch}")
+    for i_iter, batch in enumerate(progress_data, 0):
         images, labels = batch
         images = images.to(device)
         labels = labels.long().to(device)
@@ -78,12 +79,17 @@ def train(config, epoch, num_epoch, epoch_iters, base_lr,
                                   num_iters,
                                   i_iter+cur_iters)
 
-        if i_iter % config.PRINT_FREQ == 0 and dist.get_rank() == 0:
-            msg = 'Epoch: [{}/{}] Iter:[{}/{}], Time: {:.2f}, ' \
-                  'lr: {}, Loss: {:.6f}' .format(
-                      epoch, num_epoch, i_iter, epoch_iters,
-                      batch_time.average(), [x['lr'] for x in optimizer.param_groups], ave_loss.average())
-            logging.info(msg)
+        # if i_iter % config.PRINT_FREQ == 0 and dist.get_rank() == 0:
+            # msg = 'Epoch: [{}/{}] Iter:[{}/{}], Time: {:.2f}, ' \
+            #       'lr: {}, Loss: {:.6f}' .format(
+            #           epoch, num_epoch, i_iter, epoch_iters,
+            #           batch_time.average(), [x['lr'] for x in optimizer.param_groups], ave_loss.average())
+        progress_data.set_postfix({'Epoch': f'[{epoch}/{num_epoch}]',
+                                   "Iter": f"[{i_iter}/{epoch_iters}]",
+                                   "Time": f"{batch_time.average():.2f}",
+                                   "lr": f"{(optimizer.param_groups[0]['lr']):.6f}",
+                                   "Loss": f"{ave_loss.average():.2f}"})
+            # logging.info(msg)
 
     writer.add_scalar('train_loss', ave_loss.average(), global_steps)
     writer_dict['train_global_steps'] = global_steps + 1
@@ -95,7 +101,8 @@ def validate(config, epoch, testloader, model, writer_dict, device):
     confusion_matrix = np.zeros(
         (config.DATASET.NUM_CLASSES, config.DATASET.NUM_CLASSES, nums))
     with torch.no_grad():
-        for idx, batch in enumerate(tqdm(testloader, desc=f"Val #{epoch}")):
+        progress_data = tqdm(testloader, desc=f"Val #{epoch}")
+        for idx, batch in enumerate(progress_data):
             image, label = batch
             size = label.size()
             image = image.to(device)
@@ -118,8 +125,9 @@ def validate(config, epoch, testloader, model, writer_dict, device):
                     config.TRAIN.IGNORE_LABEL
                 )
 
-            if idx % 10 == 0:
-                print(idx)
+            # if idx % 10 == 0:
+            #     print(idx)
+
 
             loss = losses.mean()
             if dist.is_distributed():
