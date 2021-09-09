@@ -104,7 +104,6 @@ def main():
         # build model
     model = eval('models.' + config.MODEL.NAME +
                  '.get_seg_model')(config)
-
     # x = torch.randn((2, 3, 768, 1024),device="cpu")
     # y = model(x)    #output is list[2 items] everyone's shape is (4, 19, 128, 256)
     # dump_input = torch.rand(
@@ -217,6 +216,13 @@ def main():
                                  weight=config.LOSS.CLASS_WEIGHT)
 
     model = FullModel(model, criterion).to(device)
+    #
+    # stata = torch.load(r"output\sewage\seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484\best.pth",
+    #                    map_location = device)
+    # model.model.load_state_dict(stata)
+    # logger.info("加载状态字典ok")
+    # torch.save(model, r"output\sewage\seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484\best_model.pth")
+    # logger.info("保存整个模型ok")
     if distributed:
         model = model.to(device)
         model = torch.nn.parallel.DistributedDataParallel(

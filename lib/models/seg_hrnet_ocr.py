@@ -497,6 +497,20 @@ class HighResolutionNet(nn.Module):
             nn.Conv2d(last_inp_channels, config.DATASET.NUM_CLASSES,
                       kernel_size=1, stride=1, padding=0, bias=True)
         )
+        self.overconv = nn.ModuleList(
+            [self.conv3x3_bn_relu(48,48), self.conv3x3_bn_relu(96,96),
+             self.conv3x3_bn_relu(192,192), self.conv3x3_bn_relu(384,384)]
+        )
+
+
+    def conv3x3_bn_relu(self, inchannl, outchannl):
+        pass
+        return nn.Sequential(
+            nn.Conv2d(inchannl, outchannl,
+                      kernel_size=3, stride=1, padding=1),
+            BatchNorm2d(outchannl),
+            nn.ReLU(inplace=relu_inplace),
+        )
         
     def _make_transition_layer(
             self, num_channels_pre_layer, num_channels_cur_layer):
@@ -618,6 +632,9 @@ class HighResolutionNet(nn.Module):
             else:
                 x_list.append(y_list[i])
         x = self.stage4(x_list)
+
+        for i in range(len(x)):
+            x[i] = self.overconv[i](x[i])
 
         # Upsampling
         x0_h, x0_w = x[0].size(2), x[0].size(3)
