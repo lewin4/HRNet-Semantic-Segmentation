@@ -10,8 +10,8 @@ PRINT_FREQ: 10
 
 DATASET:
   DATASET: sewage
-  IMAGE_DIR: 'E:\CoDe\LY\data\sewage\small_dataset\small_img'
-  MASK_DIR: 'E:\Code\LY\data\sewage\small_dataset\small_label'
+  IMAGE_DIR: 'E:\LY\data\sewage\small_dataset\small_img'
+  MASK_DIR: 'E:\LY\data\sewage\small_dataset\small_label'
   NUM_CLASSES: 3
 MODEL:
   NAME: seg_hrnet_ocr
@@ -75,10 +75,10 @@ LOSS:
   CLASS_WEIGHT: [0.1, 0.3, 0.6]
 TRAIN:
   IMAGE_SIZE:
-  - 512
-  - 384
+  - 1024
+  - 768
   BASE_SIZE: 2048
-  BATCH_SIZE_PER_GPU: 5
+  BATCH_SIZE_PER_GPU: 4
   SHUFFLE: true
   BEGIN_EPOCH: 0
   END_EPOCH: 150
