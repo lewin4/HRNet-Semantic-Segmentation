@@ -323,7 +323,7 @@ def main():
             }, os.path.join(final_output_dir, 'checkpoint.pth.tar'))
             if mean_IoU > best_mIoU:
                 best_mIoU = mean_IoU
-                torch.save(model.model,
+                torch.save(model,
                            os.path.join(final_output_dir, 'best_model.pth'))
             msg = 'Loss: {:.3f}, MeanIU: {: 4.4f}, Best_mIoU: {: 4.4f}'.format(
                 valid_loss, mean_IoU, best_mIoU)
