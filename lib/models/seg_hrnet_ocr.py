@@ -497,10 +497,14 @@ class HighResolutionNet(nn.Module):
             nn.Conv2d(last_inp_channels, config.DATASET.NUM_CLASSES,
                       kernel_size=1, stride=1, padding=0, bias=True)
         )
+        num_channels = self.stage4_cfg['NUM_CHANNELS']
         self.overconv = nn.ModuleList(
-            [self.conv3x3_bn_relu(48,48), self.conv3x3_bn_relu(96,96),
-             self.conv3x3_bn_relu(192,192), self.conv3x3_bn_relu(384,384)]
+            [self.conv3x3_bn_relu(num_channels[0], num_channels[0]),
+             self.conv3x3_bn_relu(num_channels[1], num_channels[1]),
+             self.conv3x3_bn_relu(num_channels[2], num_channels[2]),
+             self.conv3x3_bn_relu(num_channels[3], num_channels[3])]
         )
+        self.aux_conv = self.conv3x3_bn_relu(sum(num_channels), sum(num_channels))
 
 
     def conv3x3_bn_relu(self, inchannl, outchannl):
@@ -647,6 +651,8 @@ class HighResolutionNet(nn.Module):
 
         feats = torch.cat([x[0], x1, x2, x3], 1)
 
+        feats = self.aux_conv(feats)
+
         out_aux_seg = []
 
         # ocr
@@ -667,7 +673,7 @@ class HighResolutionNet(nn.Module):
     def init_weights(self, pretrained='',):
         logger.info('=> init weights from normal distribution')
         for name, m in self.named_modules():
-            if any(part in name for part in {'cls', 'aux', 'ocr'}):
+            if any(part in name for part in {'cls', 'aux', 'ocr', 'over'}):
                 # print('skipped', name)
                 continue
             if isinstance(m, nn.Conv2d):
@@ -679,7 +685,7 @@ class HighResolutionNet(nn.Module):
             pretrained_dict = torch.load(pretrained, map_location={'cuda:0': 'cpu'})
             logger.info('=> loading pretrained model {}'.format(pretrained))
             model_dict = self.state_dict()
-            pretrained_dict = {k.replace('last_layer', 'aux_head').replace('model.', ''): v for k, v in pretrained_dict.items()}  
+            pretrained_dict = {k: v for k, v in pretrained_dict.items()}
             print(set(model_dict) - set(pretrained_dict))            
             print(set(pretrained_dict) - set(model_dict))            
             pretrained_dict = {k: v for k, v in pretrained_dict.items()
