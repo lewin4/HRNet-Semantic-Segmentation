@@ -7,12 +7,9 @@
 import argparse
 import os
 import pprint
-import shutil
 
 import logging
-import time
 import timeit
-from pathlib import Path
 
 import numpy as np
 
@@ -67,6 +64,9 @@ def get_sampler(dataset):
 
 def main():
     args = parse_args()
+
+    host_name = os.environ['COMPUTERNAME']
+
 
     if args.seed > 0:
         import random
@@ -216,13 +216,10 @@ def main():
                                  weight=config.LOSS.CLASS_WEIGHT)
 
     model = FullModel(model, criterion).to(device)
-    #
-    # stata = torch.load(r"output\sewage\seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484\best.pth",
-    #                    map_location = device)
-    # model.model.load_state_dict(stata)
-    # logger.info("加载状态字典ok")
-    # torch.save(model, r"output\sewage\seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484\best_model.pth")
-    # logger.info("保存整个模型ok")
+
+    if config.MODEL.PRETRAINED is not None:
+        model.model.init_weights(config.MODEL.PRETRAINED)
+
     if distributed:
         model = model.to(device)
         model = torch.nn.parallel.DistributedDataParallel(

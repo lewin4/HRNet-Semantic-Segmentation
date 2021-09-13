@@ -16,7 +16,7 @@ DATASET:
 MODEL:
   NAME: seg_hrnet_ocr
   NUM_OUTPUTS: 2
-  PRETRAINED: r"output\sewage\seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484\best.pth"
+  PRETRAINED: r"output\sewage\seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484\best_model.pth"
   EXTRA:
     FINAL_CONV_KERNEL: 1
     STAGE1:
@@ -82,7 +82,7 @@ TRAIN:
   SHUFFLE: true
   BEGIN_EPOCH: 0
   END_EPOCH: 150
-  RESUME: true
+  RESUME: false
   OPTIMIZER: sgd
   LR: 0.0025
   WD: 0.00025

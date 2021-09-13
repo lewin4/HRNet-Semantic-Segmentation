@@ -179,11 +179,13 @@ class SpatialOCR_Module(nn.Module):
             ModuleHelper.BNReLU(out_channels, bn_type=bn_type),
             nn.Dropout2d(dropout)
         )
+        self.convtrans = nn.ConvTranspose2d(out_channels, out_channels, kernel_size=3, stride=4, padding=0, output_padding=1)
 
     def forward(self, feats, proxy_feats):
         context = self.object_context_block(feats, proxy_feats)
 
         output = self.conv_bn_dropout(torch.cat([context, feats], 1))
+        output = self.convtrans(output)
 
         return output
 
@@ -495,7 +497,10 @@ class HighResolutionNet(nn.Module):
             BatchNorm2d(last_inp_channels),
             nn.ReLU(inplace=relu_inplace),
             nn.Conv2d(last_inp_channels, config.DATASET.NUM_CLASSES,
-                      kernel_size=1, stride=1, padding=0, bias=True)
+                      kernel_size=1, stride=1, padding=0, bias=True),
+            BatchNorm2d(config.DATASET.NUM_CLASSES),
+            nn.ReLU(inplace=relu_inplace),
+            nn.ConvTranspose2d(config.DATASET.NUM_CLASSES, config.DATASET.NUM_CLASSES, kernel_size=3, stride=4, padding=0, output_padding=1)
         )
         num_channels = self.stage4_cfg['NUM_CHANNELS']
         self.overconv = nn.ModuleList(
@@ -682,7 +687,7 @@ class HighResolutionNet(nn.Module):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
         if os.path.isfile(pretrained):
-            pretrained_dict = torch.load(pretrained, map_location={'cuda:0': 'cpu'})
+            pretrained_dict = torch.load(pretrained, map_location={'cuda:0': 'cpu'}).model.state_dict()
             logger.info('=> loading pretrained model {}'.format(pretrained))
             model_dict = self.state_dict()
             pretrained_dict = {k: v for k, v in pretrained_dict.items()}
