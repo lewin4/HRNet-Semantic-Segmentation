@@ -62,8 +62,7 @@ class SpatialGather_Module(nn.Module):
         feats = feats.view(batch_size, feats.size(1), -1)
         feats = feats.permute(0, 2, 1) # batch x hw x c 
         probs = F.softmax(self.scale * probs, dim=2)# batch x k x hw
-        ocr_context = torch.matmul(probs, feats)\
-        .permute(0, 2, 1).unsqueeze(3)# batch x k x c
+        ocr_context = torch.matmul(probs, feats).permute(0, 2, 1).unsqueeze(3)# batch x k x c
         return ocr_context
 
 
@@ -500,7 +499,7 @@ class HighResolutionNet(nn.Module):
                       kernel_size=1, stride=1, padding=0, bias=True),
             BatchNorm2d(config.DATASET.NUM_CLASSES),
             nn.ReLU(inplace=relu_inplace),
-            nn.ConvTranspose2d(config.DATASET.NUM_CLASSES, config.DATASET.NUM_CLASSES, kernel_size=3, stride=4, padding=0, output_padding=1)
+            # nn.ConvTranspose2d(config.DATASET.NUM_CLASSES, config.DATASET.NUM_CLASSES, kernel_size=3, stride=4, padding=0, output_padding=1)
         )
         num_channels = self.stage4_cfg['NUM_CHANNELS']
         self.overconv = nn.ModuleList(
@@ -687,7 +686,7 @@ class HighResolutionNet(nn.Module):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
         if os.path.isfile(pretrained):
-            pretrained_dict = torch.load(pretrained, map_location={'cuda:0': 'cpu'}).model.state_dict()
+            pretrained_dict = torch.load(pretrained, map_location={'cuda:0': 'cpu'})
             logger.info('=> loading pretrained model {}'.format(pretrained))
             model_dict = self.state_dict()
             pretrained_dict = {k: v for k, v in pretrained_dict.items()}

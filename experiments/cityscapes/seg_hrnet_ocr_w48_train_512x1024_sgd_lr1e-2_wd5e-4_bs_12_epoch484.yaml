@@ -16,7 +16,7 @@ DATASET:
 MODEL:
   NAME: seg_hrnet_ocr
   NUM_OUTPUTS: 2
-  PRETRAINED: r"output\sewage\seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484\best_model.pth"
+  PRETRAINED: r"output\sewage\seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484\best.pth"
   EXTRA:
     FINAL_CONV_KERNEL: 1
     STAGE1:
@@ -75,10 +75,10 @@ LOSS:
   CLASS_WEIGHT: [0.1, 0.3, 0.6]
 TRAIN:
   IMAGE_SIZE:
-  - 768
-  - 576
+  - 480
+  - 480
   BASE_SIZE: 2048
-  BATCH_SIZE_PER_GPU: 4
+  BATCH_SIZE_PER_GPU: 2
   SHUFFLE: true
   BEGIN_EPOCH: 0
   END_EPOCH: 150
