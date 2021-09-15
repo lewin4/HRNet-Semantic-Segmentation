@@ -10,8 +10,8 @@ PRINT_FREQ: 10
 
 DATASET:
   DATASET: sewage
-  IMAGE_DIR: 'E:\LY\data\sewage\small_dataset\small_img'
-  MASK_DIR: 'E:\LY\data\sewage\small_dataset\small_label'
+  IMAGE_DIR: 'E:\code\TBR\T-pcm\images'
+  MASK_DIR: 'E:\code\TBR\T-pcm\masks'
   NUM_CLASSES: 3
 MODEL:
   NAME: seg_hrnet_ocr
