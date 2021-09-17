@@ -38,9 +38,9 @@ def parse_args():
     parser.add_argument('--cfg',
                         help='experiment configure file name',
                         # required=True,
-                        default=r"..\experiments\cityscapes\seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484.yaml",
+                        default=r"..\experiments\cityscapes\seg_hrnet_ocr_w48.yaml",
                         type=str)
-    parser.add_argument('--seed', type=int, default=304)
+    parser.add_argument('--seed', type=int, default=454)
     parser.add_argument("--local_rank", type=int, default=-1)
     parser.add_argument('opts',
                         help="Modify config options using the command-line",
@@ -126,28 +126,6 @@ def main():
 
     # prepare data
     crop_size = (config.TRAIN.IMAGE_SIZE[1], config.TRAIN.IMAGE_SIZE[0])
-    # train_dataset = eval('datasets.'+config.DATASET.DATASET)(
-    #                     root=config.DATASET.ROOT,
-    #                     list_path=config.DATASET.TRAIN_SET,
-    #                     num_samples=None,
-    #                     num_classes=config.DATASET.NUM_CLASSES,
-    #                     multi_scale=config.TRAIN.MULTI_SCALE,
-    #                     flip=config.TRAIN.FLIP,
-    #                     ignore_label=config.TRAIN.IGNORE_LABEL,
-    #                     base_size=config.TRAIN.BASE_SIZE,
-    #                     crop_size=crop_size,
-    #                     downsample_rate=config.TRAIN.DOWNSAMPLERATE,
-    #                     scale_factor=config.TRAIN.SCALE_FACTOR)
-    #
-    # train_sampler = get_sampler(train_dataset)
-    # trainloader = torch.utils.data.DataLoader(
-    #     train_dataset,
-    #     batch_size=batch_size,
-    #     shuffle=config.TRAIN.SHUFFLE and train_sampler is None,
-    #     num_workers=config.WORKERS,
-    #     pin_memory=True,
-    #     drop_last=True,
-    #     sampler=train_sampler)
 
     extra_epoch_iters = 0
     if config.DATASET.EXTRA_TRAIN_SET:
@@ -217,8 +195,8 @@ def main():
 
     model = FullModel(model, criterion).to(device)
 
-    if config.MODEL.PRETRAINED is not None:
-        model.model.init_weights(config.MODEL.PRETRAINED)
+    # if config.MODEL.PRETRAINED is not None:
+    #     model.model.init_weights(config.MODEL.PRETRAINED)
 
     if distributed:
         model = model.to(device)
