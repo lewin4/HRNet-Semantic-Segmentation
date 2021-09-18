@@ -9,6 +9,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 import logging
 from config import config
+import core.lovaszSoftmax.pytorch.lovasz_losses as L
 
 
 class CrossEntropy(nn.Module):
@@ -23,17 +24,6 @@ class CrossEntropy(nn.Module):
             ignore_index=ignore_label
         )
 
-    def _forward(self, score, target):
-        ph, pw = score.size(2), score.size(3)
-        h, w = target.size(1), target.size(2)
-        if ph != h or pw != w:
-            score = F.interpolate(input=score, size=(
-                h, w), mode='bilinear', align_corners=config.MODEL.ALIGN_CORNERS)
-
-        loss = self.criterion(score, target)
-
-        return loss
-
     def forward(self, score, target):
 
         if config.MODEL.NUM_OUTPUTS == 1:
@@ -42,7 +32,16 @@ class CrossEntropy(nn.Module):
         weights = config.LOSS.BALANCE_WEIGHTS
         assert len(weights) == len(score)
 
-        return sum([w * self._forward(x, target) for (w, x) in zip(weights, score)])
+        ph, pw = score.size(2), score.size(3)
+        h, w = target.size(1), target.size(2)
+        if ph != h or pw != w:
+            score = F.interpolate(input=score, size=(
+                h, w), mode='bilinear', align_corners=config.MODEL.ALIGN_CORNERS)
+
+        loss_soft_regions = self.criterion(score[0], target)
+        loss_output = L.lovasz_softmax(F.softmax(score[1], dim=1),
+                                       target, ignore=self.ignore_label)
+        return loss_soft_regions * weights[0] + loss_output * weights[1]
 
 
 class OhemCrossEntropy(nn.Module):

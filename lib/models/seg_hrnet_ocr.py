@@ -178,13 +178,13 @@ class SpatialOCR_Module(nn.Module):
             ModuleHelper.BNReLU(out_channels, bn_type=bn_type),
             nn.Dropout2d(dropout)
         )
-        self.convtrans = nn.ConvTranspose2d(out_channels, out_channels, kernel_size=3, stride=4, padding=0, output_padding=1)
+        # self.convtrans = nn.ConvTranspose2d(out_channels, out_channels, kernel_size=3, stride=4, padding=0, output_padding=1)
 
     def forward(self, feats, proxy_feats):
         context = self.object_context_block(feats, proxy_feats)
 
         output = self.conv_bn_dropout(torch.cat([context, feats], 1))
-        output = self.convtrans(output)
+        # output = self.convtrans(output)
 
         return output
 

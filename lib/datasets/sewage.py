@@ -56,10 +56,12 @@ def get_loaders(image_dir,
     if train_transform is None:
         train_transform = A.Compose(
             [
-                A.Resize(height=img_shape[0], width=img_shape[1]),
-                A.Rotate(limit=35, p=1.0),
+                A.RandomCrop(height=img_shape[0], width=img_shape[1]),
                 A.HorizontalFlip(p=0.5),
-                A.VerticalFlip(p=0.1),
+                A.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
+                A.CoarseDropout(max_holes=64, min_holes=32, min_height=2, min_width=2, fill_value=255),
+                # A.Rotate(limit=35, p=1.0),
+                # A.VerticalFlip(p=0.1),
                 A.Normalize(
                     mean=[0.5330, 0.5463, 0.5493],
                     std=[0.1143, 0.1125, 0.1007],
@@ -71,7 +73,7 @@ def get_loaders(image_dir,
     if val_transform is None:
         val_transform = A.Compose(
             [
-                A.Resize(height=img_shape[0], width=img_shape[1]),
+                # A.Resize(height=img_shape[0], width=img_shape[1]),
                 A.Normalize(
                     mean=[0.5330, 0.5463, 0.5493],
                     std=[0.1143, 0.1125, 0.1007],

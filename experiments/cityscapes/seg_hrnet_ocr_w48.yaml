@@ -10,13 +10,13 @@ PRINT_FREQ: 10
 
 DATASET:
   DATASET: sewage
-  IMAGE_DIR: 'E:\LY\data\sewage\small_dataset\small_img'
-  MASK_DIR: 'E:\LY\data\sewage\small_dataset\small_label'
+  IMAGE_DIR: 'D:\Code\data\sewage\small_dataset\small_img'
+  MASK_DIR: 'D:\Code\data\sewage\small_dataset\small_label'
   NUM_CLASSES: 3
 MODEL:
   NAME: seg_hrnet_ocr
   NUM_OUTPUTS: 2
-  PRETRAINED: r"output\sewage\seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484\best_model.pth"
+#  PRETRAINED: r"output\sewage\seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484\best_model.pth"
   EXTRA:
     FINAL_CONV_KERNEL: 1
     STAGE1:
@@ -78,20 +78,20 @@ TRAIN:
   - 768
   - 576
   BASE_SIZE: 2048
-  BATCH_SIZE_PER_GPU: 3
+  BATCH_SIZE_PER_GPU: 2
   SHUFFLE: true
   BEGIN_EPOCH: 0
   END_EPOCH: 150
-  RESUME: true
+  RESUME: false
   OPTIMIZER: sgd
-  LR: 0.0025
+  LR: 0.01
   WD: 0.00025
   MOMENTUM: 0.9
   NESTEROV: false
   FLIP: true
   MULTI_SCALE: true
   DOWNSAMPLERATE: 1
-  IGNORE_LABEL: 3
+  IGNORE_LABEL: 0
   SCALE_FACTOR: 16
 TEST:
   IMAGE_SIZE:
