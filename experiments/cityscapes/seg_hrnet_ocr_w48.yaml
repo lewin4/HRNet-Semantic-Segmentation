@@ -85,7 +85,7 @@ TRAIN:
   RESUME: false
   OPTIMIZER: sgd
   LR: 0.01
-  WD: 0.00025
+  WD: 0.01
   MOMENTUM: 0.9
   NESTEROV: false
   FLIP: true
