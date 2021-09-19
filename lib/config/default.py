@@ -61,6 +61,7 @@ _C.DATASET.DATASET = 'cityscapes'
 _C.DATASET.NUM_CLASSES = 19
 _C.DATASET.TRAIN_SET = 'list/cityscapes/train.lst'
 _C.DATASET.EXTRA_TRAIN_SET = ''
+_C.DATASET.BASE_IMAGE_SIZE = [1024, 768]
 _C.DATASET.TEST_SET = 'list/cityscapes/val.lst'
 _C.DATASET.IMAGE_DIR = "D:\Code\data\sewage\small_dataset\small_img"
 _C.DATASET.MASK_DIR = "D:\Code\data\sewage\small_dataset\small_label"

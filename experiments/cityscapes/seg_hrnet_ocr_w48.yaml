@@ -10,13 +10,14 @@ PRINT_FREQ: 10
 
 DATASET:
   DATASET: sewage
+  BASE_IMAGE_SIZE: [1024, 768]
   IMAGE_DIR: 'D:\Code\data\sewage\small_dataset\small_img'
   MASK_DIR: 'D:\Code\data\sewage\small_dataset\small_label'
   NUM_CLASSES: 3
 MODEL:
   NAME: seg_hrnet_ocr
   NUM_OUTPUTS: 2
-#  PRETRAINED: r"output\sewage\seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484\best_model.pth"
+  PRETRAINED: r"output\sewage\seg_hrnet_ocr_w48_train_512x1024_sgd_lr1e-2_wd5e-4_bs_12_epoch484\best_model.pth"
   EXTRA:
     FINAL_CONV_KERNEL: 1
     STAGE1:
@@ -72,13 +73,13 @@ LOSS:
   OHEMTHRES: 0.9
   OHEMKEEP: 131072
   BALANCE_WEIGHTS: [0.4, 1]
-  CLASS_WEIGHT: [0.1, 0.3, 0.6]
+  CLASS_WEIGHT: [1.63196599, 6.20771366, 25.68862632]
 TRAIN:
   IMAGE_SIZE:
   - 768
   - 576
   BASE_SIZE: 2048
-  BATCH_SIZE_PER_GPU: 2
+  BATCH_SIZE_PER_GPU: 4
   SHUFFLE: true
   BEGIN_EPOCH: 0
   END_EPOCH: 150
@@ -91,7 +92,7 @@ TRAIN:
   FLIP: true
   MULTI_SCALE: true
   DOWNSAMPLERATE: 1
-  IGNORE_LABEL: 0
+  IGNORE_LABEL: -1
   SCALE_FACTOR: 16
 TEST:
   IMAGE_SIZE:

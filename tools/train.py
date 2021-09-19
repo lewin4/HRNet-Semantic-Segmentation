@@ -10,8 +10,9 @@ import pprint
 
 import logging
 import timeit
-
+from tqdm import tqdm
 import numpy as np
+from PIL import Image
 
 import torch
 import torch.nn as nn
@@ -176,12 +177,41 @@ def main():
     #     sampler=test_sampler)
 
     trainloader, valloader = eval('datasets.' + config.DATASET.DATASET + ".get_loaders")(
-                                image_dir = config.DATASET.IMAGE_DIR,
-                                mask_dir = config.DATASET.MASK_DIR,
-                                batch_size = batch_size,
-                                num_worker = config.WORKERS,
-                                pin_memory = True,
-                                img_shape = crop_size)
+                                image_dir=config.DATASET.IMAGE_DIR,
+                                mask_dir=config.DATASET.MASK_DIR,
+                                batch_size=batch_size,
+                                num_worker=config.WORKERS,
+                                pin_memory=True,
+                                img_shape=crop_size)
+
+    # def calculate_weigths_labels(label_dir, num_classes):
+    #     # Create an instance from the data loader
+    #     z = np.zeros((num_classes,))
+    #     imgs = os.listdir(label_dir)
+    #     # Initialize tqdm
+    #     tqdm_batch = tqdm(imgs)
+    #     print('Calculating classes weights')
+    #     for label in tqdm_batch:
+    #         label_path = os.path.join(label_dir, label)
+    #         labels = np.array(Image.open(label_path), dtype=np.uint8)
+    #         # y = y.detach().cpu().numpy()
+    #         # mask = (y >= 0) & (y < num_classes)
+    #         # labels = y[mask].astype(np.uint8)
+    #         count_l = np.bincount(labels, minlength=num_classes)  ##统计每幅图像中不同类别像素的个数
+    #         z += count_l
+    #     tqdm_batch.close()
+    #     total_frequency = np.sum(z)
+    #     class_weights = []
+    #     for frequency in z:
+    #         class_weight = 1 / (np.log(1.02 + (frequency / total_frequency)))  ##这里是计算每个类别像素的权重
+    #         class_weights.append(class_weight)
+    #     ret = np.array(class_weights)
+    #     # classes_weights_path = os.path.join(Path.db_root_dir(dataset), dataset + '_classes_weights.npy')  ##生成权重文件
+    #     # np.save(classes_weights_path, ret)  ##把各类别像素权重保存到一个文件中
+    #     return ret
+    #
+    # weight = calculate_weigths_labels(config.DATASET.MASK_DIR, 3)
+
 
     # criterion
     if config.LOSS.USE_OHEM:

@@ -31,12 +31,12 @@ class CrossEntropy(nn.Module):
 
         weights = config.LOSS.BALANCE_WEIGHTS
         assert len(weights) == len(score)
-
-        ph, pw = score.size(2), score.size(3)
         h, w = target.size(1), target.size(2)
-        if ph != h or pw != w:
-            score = F.interpolate(input=score, size=(
-                h, w), mode='bilinear', align_corners=config.MODEL.ALIGN_CORNERS)
+        for i in range(len(score)):
+            ph, pw = score[i].size(2), score[i].size(3)
+            if ph != h or pw != w:
+                score[i] = F.interpolate(input=score[i], size=(
+                    h, w), mode='bilinear', align_corners=config.MODEL.ALIGN_CORNERS)
 
         loss_soft_regions = self.criterion(score[0], target)
         loss_output = L.lovasz_softmax(F.softmax(score[1], dim=1),

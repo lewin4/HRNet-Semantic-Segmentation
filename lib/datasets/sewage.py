@@ -6,6 +6,7 @@ import random
 from torch.utils.data import DataLoader
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
+from config import config
 
 
 
@@ -56,6 +57,8 @@ def get_loaders(image_dir,
     if train_transform is None:
         train_transform = A.Compose(
             [
+                A.Resize(config.DATASET.BASE_IMAGE_SIZE[1],
+                         config.DATASET.BASE_IMAGE_SIZE[0]),
                 A.RandomCrop(height=img_shape[0], width=img_shape[1]),
                 A.HorizontalFlip(p=0.5),
                 A.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
@@ -73,7 +76,8 @@ def get_loaders(image_dir,
     if val_transform is None:
         val_transform = A.Compose(
             [
-                # A.Resize(height=img_shape[0], width=img_shape[1]),
+                A.Resize(config.DATASET.BASE_IMAGE_SIZE[1],
+                         config.DATASET.BASE_IMAGE_SIZE[0]),
                 A.Normalize(
                     mean=[0.5330, 0.5463, 0.5493],
                     std=[0.1143, 0.1125, 0.1007],
