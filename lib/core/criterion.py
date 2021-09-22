@@ -12,9 +12,9 @@ from config import config
 import core.lovaszSoftmax.pytorch.lovasz_losses as L
 
 
-class CrossEntropy(nn.Module):
+class CrossEntropyLovasz(nn.Module):
     def __init__(self, ignore_label=-1, weight=None):
-        super(CrossEntropy, self).__init__()
+        super(CrossEntropyLovasz, self).__init__()
         self.ignore_label = ignore_label
         if weight is not None:
             weight = torch.FloatTensor(weight)

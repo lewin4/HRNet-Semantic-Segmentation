@@ -24,7 +24,7 @@ import sys
 sys.path.append("../lib")
 from config import config
 from config import update_config
-from core.criterion import CrossEntropy, OhemCrossEntropy
+from core.criterion import CrossEntropyLovasz, OhemCrossEntropy
 from core.function import train, validate
 from utils.modelsummary import get_model_summary
 from utils.utils import create_logger, FullModel
@@ -220,13 +220,13 @@ def main():
                                      min_kept=config.LOSS.OHEMKEEP,
                                      weight=config.LOSS.CLASS_WEIGHT)
     else:
-        criterion = CrossEntropy(ignore_label=config.TRAIN.IGNORE_LABEL,
+        criterion = CrossEntropyLovasz(ignore_label=config.TRAIN.IGNORE_LABEL,
                                  weight=config.LOSS.CLASS_WEIGHT)
 
     model = FullModel(model, criterion).to(device)
 
-    # if config.MODEL.PRETRAINED is not None:
-    #     model.model.init_weights(config.MODEL.PRETRAINED)
+    if config.MODEL.PRETRAINED is not None:
+        model.model.init_weights(config.MODEL.PRETRAINED)
 
     if distributed:
         model = model.to(device)
