@@ -45,7 +45,7 @@ def train(config, epoch, num_epoch, epoch_iters, base_lr,
     batch_time = AverageMeter()
     ave_loss = AverageMeter()
     tic = time.time()
-    cur_iters = epoch*epoch_iters
+    cur_iters = epoch * epoch_iters
     writer = writer_dict['writer']
     global_steps = writer_dict['train_global_steps']
 
@@ -77,22 +77,23 @@ def train(config, epoch, num_epoch, epoch_iters, base_lr,
         lr = adjust_learning_rate(optimizer,
                                   base_lr,
                                   num_iters,
-                                  i_iter+cur_iters)
+                                  i_iter + cur_iters)
 
         # if i_iter % config.PRINT_FREQ == 0 and dist.get_rank() == 0:
-            # msg = 'Epoch: [{}/{}] Iter:[{}/{}], Time: {:.2f}, ' \
-            #       'lr: {}, Loss: {:.6f}' .format(
-            #           epoch, num_epoch, i_iter, epoch_iters,
-            #           batch_time.average(), [x['lr'] for x in optimizer.param_groups], ave_loss.average())
+        # msg = 'Epoch: [{}/{}] Iter:[{}/{}], Time: {:.2f}, ' \
+        #       'lr: {}, Loss: {:.6f}' .format(
+        #           epoch, num_epoch, i_iter, epoch_iters,
+        #           batch_time.average(), [x['lr'] for x in optimizer.param_groups], ave_loss.average())
         progress_data.set_postfix({'Epoch': f'[{epoch}/{num_epoch}]',
                                    "Iter": f"[{i_iter}/{epoch_iters}]",
                                    "Time": f"{batch_time.average():.2f}",
                                    "lr": f"{(optimizer.param_groups[0]['lr']):.6f}",
                                    "Loss": f"{ave_loss.average():.2f}"})
-            # logging.info(msg)
+        # logging.info(msg)
 
     writer.add_scalar('train_loss', ave_loss.average(), global_steps)
     writer_dict['train_global_steps'] = global_steps + 1
+
 
 def validate(config, epoch, testloader, model, writer_dict, device):
     model.eval()
@@ -127,7 +128,6 @@ def validate(config, epoch, testloader, model, writer_dict, device):
 
             # if idx % 10 == 0:
             #     print(idx)
-
 
             loss = losses.mean()
             if dist.is_distributed():
@@ -209,8 +209,8 @@ def testval(config, test_dataset, testloader, model,
     pos = confusion_matrix.sum(1)
     res = confusion_matrix.sum(0)
     tp = np.diag(confusion_matrix)
-    pixel_acc = tp.sum()/pos.sum()
-    mean_acc = (tp/np.maximum(1.0, pos)).mean()
+    pixel_acc = tp.sum() / pos.sum()
+    mean_acc = (tp / np.maximum(1.0, pos)).mean()
     IoU_array = (tp / np.maximum(1.0, pos + res - tp))
     mean_IoU = IoU_array.mean()
 
@@ -242,3 +242,35 @@ def test(config, test_dataset, testloader, model,
                 if not os.path.exists(sv_path):
                     os.mkdir(sv_path)
                 test_dataset.save_pred(pred, sv_path, name)
+
+
+def just_predict(config, model: nn.Module, dataloader, predict_num: int):
+    """
+    从dataloader中选取指定数量的图片，预测图片
+    :param config:配置文件
+    :param model:模型, nn.model
+    :param dataloader:dataloader
+    :param predict_num:预测的图片数量
+    :return:None
+    """
+    model.eval()
+    with torch.no_grad():
+        for _, batch in enumerate(tqdm(dataloader)):
+            predict_num -= 1
+            if predict_num < 0:
+                break
+            image, label = batch
+            size = image.shape[2:]
+            # pred = test_dataset.multi_scale_inference(
+            #     config,
+            #     model,
+            #     image,
+            #     scales=config.TEST.SCALE_LIST,
+            #     flip=config.TEST.FLIP_TEST)
+            pred = model(image)
+
+            if pred.size()[-2] != size[0] or pred.size()[-1] != size[1]:
+                pred = F.interpolate(
+                    pred, size[-2:],
+                    mode='bilinear', align_corners=config.MODEL.ALIGN_CORNERS
+                )
