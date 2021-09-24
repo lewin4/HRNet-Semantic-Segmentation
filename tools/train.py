@@ -155,27 +155,6 @@ def main():
         extra_epoch_iters = np.int(extra_train_dataset.__len__() /
                         config.TRAIN.BATCH_SIZE_PER_GPU / len(gpus))
 
-    # test_size = (config.TEST.IMAGE_SIZE[1], config.TEST.IMAGE_SIZE[0])
-    # test_dataset = eval('datasets.'+config.DATASET.DATASET)(
-    #                     root=config.DATASET.ROOT,
-    #                     list_path=config.DATASET.TEST_SET,
-    #                     num_samples=config.TEST.NUM_SAMPLES,
-    #                     num_classes=config.DATASET.NUM_CLASSES,
-    #                     multi_scale=False,
-    #                     flip=False,
-    #                     ignore_label=config.TRAIN.IGNORE_LABEL,
-    #                     base_size=config.TEST.BASE_SIZE,
-    #                     crop_size=test_size,
-    #                     downsample_rate=1)
-    #
-    # test_sampler = get_sampler(test_dataset)
-    # testloader = torch.utils.data.DataLoader(
-    #     test_dataset,
-    #     batch_size=batch_size,
-    #     shuffle=False,
-    #     num_workers=config.WORKERS,
-    #     pin_memory=True,
-    #     sampler=test_sampler)
 
     trainloader, valloader = eval('datasets.' + config.DATASET.DATASET + ".get_loaders")(
                                 image_dir=config.DATASET.IMAGE_DIR,
@@ -184,35 +163,6 @@ def main():
                                 num_worker=config.WORKERS,
                                 pin_memory=True,
                                 img_shape=crop_size)
-
-    # def calculate_weigths_labels(label_dir, num_classes):
-    #     # Create an instance from the data loader
-    #     z = np.zeros((num_classes,))
-    #     imgs = os.listdir(label_dir)
-    #     # Initialize tqdm
-    #     tqdm_batch = tqdm(imgs)
-    #     print('Calculating classes weights')
-    #     for label in tqdm_batch:
-    #         label_path = os.path.join(label_dir, label)
-    #         labels = np.array(Image.open(label_path), dtype=np.uint8)
-    #         # y = y.detach().cpu().numpy()
-    #         # mask = (y >= 0) & (y < num_classes)
-    #         # labels = y[mask].astype(np.uint8)
-    #         count_l = np.bincount(labels, minlength=num_classes)  ##统计每幅图像中不同类别像素的个数
-    #         z += count_l
-    #     tqdm_batch.close()
-    #     total_frequency = np.sum(z)
-    #     class_weights = []
-    #     for frequency in z:
-    #         class_weight = 1 / (np.log(1.02 + (frequency / total_frequency)))  ##这里是计算每个类别像素的权重
-    #         class_weights.append(class_weight)
-    #     ret = np.array(class_weights)
-    #     # classes_weights_path = os.path.join(Path.db_root_dir(dataset), dataset + '_classes_weights.npy')  ##生成权重文件
-    #     # np.save(classes_weights_path, ret)  ##把各类别像素权重保存到一个文件中
-    #     return ret
-    #
-    # weight = calculate_weigths_labels(config.DATASET.MASK_DIR, 3)
-
 
     # criterion
     if config.LOSS.USE_OHEM:
@@ -299,6 +249,7 @@ def main():
     losses = []
     mious = []
 
+    scaler = torch.cuda.amp.GradScaler()
     for epoch in range(last_epoch, end_epoch):
 
         current_trainloader = extra_trainloader if epoch >= config.TRAIN.END_EPOCH else trainloader
@@ -312,11 +263,11 @@ def main():
             train(config, epoch - config.TRAIN.END_EPOCH,
                   config.TRAIN.EXTRA_EPOCH, extra_epoch_iters,
                   config.TRAIN.EXTRA_LR, extra_iters,
-                  extra_trainloader, optimizer, model, writer_dict, device)
+                  extra_trainloader, optimizer, model, writer_dict, device, scaler)
         else:
             train(config, epoch, config.TRAIN.END_EPOCH,
                   epoch_iters, config.TRAIN.LR, num_iters,
-                  trainloader, optimizer, model, writer_dict, device)
+                  trainloader, optimizer, model, writer_dict, device, scaler)
 
         valid_loss, mean_IoU, IoU_array = validate(config, epoch,
                                                    valloader, model, writer_dict, device)

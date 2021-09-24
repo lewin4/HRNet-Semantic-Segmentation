@@ -38,7 +38,8 @@ def reduce_tensor(inp):
 
 
 def train(config, epoch, num_epoch, epoch_iters, base_lr,
-          num_iters, trainloader, optimizer, model, writer_dict, device):
+          num_iters, trainloader, optimizer, model, writer_dict,
+          device, scaler):
     # Training
     model.train()
 
@@ -54,18 +55,20 @@ def train(config, epoch, num_epoch, epoch_iters, base_lr,
         images, labels = batch
         images = images.to(device)
         labels = labels.long().to(device)
-
-        losses, _ = model(images, labels)
-        loss = losses.mean()
-
-        if dist.is_distributed():
-            reduced_loss = reduce_tensor(loss)
-        else:
-            reduced_loss = loss
+        with torch.cuda.amp.autocast():
+            losses, _ = model(images, labels)
+            loss = losses.mean()
+            if dist.is_distributed():
+                reduced_loss = reduce_tensor(loss)
+            else:
+                reduced_loss = loss
 
         model.zero_grad()
-        loss.backward()
-        optimizer.step()
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
+        # loss.bacaward()
+        # optimizer.step()
 
         # measure elapsed time
         batch_time.update(time.time() - tic)
@@ -260,6 +263,7 @@ def just_predict(config, model: nn.Module, dataloader, predict_num: int):
             if predict_num < 0:
                 break
             image, label = batch
+            image = image.cuda()
             size = image.shape[2:]
             # pred = test_dataset.multi_scale_inference(
             #     config,

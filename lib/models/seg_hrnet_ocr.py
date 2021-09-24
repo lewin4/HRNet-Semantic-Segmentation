@@ -478,6 +478,12 @@ class HighResolutionNet(nn.Module):
                       kernel_size=3, stride=1, padding=1),
             BatchNorm2d(ocr_mid_channels),
             nn.ReLU(inplace=relu_inplace),
+            #在这儿加了反卷积，输出形状和输入形状一样
+            nn.ConvTranspose2d(ocr_mid_channels, ocr_mid_channels,
+                               kernel_size=3, stride=4, padding=0,
+                               output_padding=1),
+            BatchNorm2d(ocr_mid_channels),
+            nn.ReLU(inplace=relu_inplace),
         )
         self.ocr_gather_head = SpatialGather_Module(config.DATASET.NUM_CLASSES)
 
@@ -499,7 +505,10 @@ class HighResolutionNet(nn.Module):
                       kernel_size=1, stride=1, padding=0, bias=True),
             BatchNorm2d(config.DATASET.NUM_CLASSES),
             nn.ReLU(inplace=relu_inplace),
-            # nn.ConvTranspose2d(config.DATASET.NUM_CLASSES, config.DATASET.NUM_CLASSES, kernel_size=3, stride=4, padding=0, output_padding=1)
+            nn.ConvTranspose2d(config.DATASET.NUM_CLASSES, config.DATASET.NUM_CLASSES,
+                               kernel_size=3, stride=4, padding=0, output_padding=1),
+            BatchNorm2d(config.DATASET.NUM_CLASSES),
+            nn.ReLU(inplace=relu_inplace),
         )
         num_channels = self.stage4_cfg['NUM_CHANNELS']
         self.overconv = nn.ModuleList(

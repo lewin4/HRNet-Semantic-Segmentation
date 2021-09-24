@@ -10,16 +10,17 @@ PRINT_FREQ: 10
 
 DATASET:
   DATASET: sewage
-  BASE_IMAGE_SIZE: [
-
-    40, 640]
+  BASE_IMAGE_SIZE: [640, 640]
   IMAGE_DIR: 'E:\wlj\data\overlap200_12_dataset\overlap_img'
   MASK_DIR: 'E:\wlj\data\overlap200_12_dataset\overlap_label'
   NUM_CLASSES: 3
 MODEL:
   NAME: seg_hrnet_ocr
   NUM_OUTPUTS: 2
-  PRETRAINED: r"output\sewage\seg_hrnet_ocr_w48\best_model.pth"
+#  PRETRAINED: r"output\sewage\seg_hrnet_ocr_w48\best_model.pth"
+  OCR:
+    MID_CHANNELS: 128
+    KEY_CHANNELS: 64
   EXTRA:
     FINAL_CONV_KERNEL: 1
     STAGE1:
@@ -104,3 +105,4 @@ TEST:
   BATCH_SIZE_PER_GPU: 1
   FLIP_TEST: false
   MULTI_SCALE: false
+  MODEL_FILE: 'output/sewage/seg_hrnet_ocr_w48/best_model.pth'

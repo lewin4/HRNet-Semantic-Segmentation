@@ -80,20 +80,23 @@ def main():
         model_state_file = os.path.join(final_output_dir, 'final_state.pth')        
     logger.info('=> loading model from {}'.format(model_state_file))
         
-    pretrained_dict = torch.load(model_state_file)
-    if 'state_dict' in pretrained_dict:
-        pretrained_dict = pretrained_dict['state_dict']
-    model_dict = model.state_dict()
-    pretrained_dict = {k[6:]: v for k, v in pretrained_dict.items()
-                        if k[6:] in model_dict.keys()}
-    for k, _ in pretrained_dict.items():
-        logger.info(
-            '=> loading {} from pretrained model'.format(k))
-    model_dict.update(pretrained_dict)
-    model.load_state_dict(model_dict)
+    # pretrained_dict = torch.load(model_state_file)
+    # if 'state_dict' in pretrained_dict:
+    #     pretrained_dict = pretrained_dict['state_dict']
+    # model_dict = model.state_dict()
+    # pretrained_dict = {k[6:]: v for k, v in pretrained_dict.items()
+    #                     if k[6:] in model_dict.keys()}
+    # for k, _ in pretrained_dict.items():
+    #     logger.info(
+    #         '=> loading {} from pretrained model'.format(k))
+    # model_dict.update(pretrained_dict)
+    # model.load_state_dict(model_dict)
 
-    gpus = list(config.GPUS)
-    model = nn.DataParallel(model, device_ids=gpus).cuda()
+    model.init_weights(model_state_file)
+    model.cuda()
+
+    # gpus = list(config.GPUS)
+    # model = nn.DataParallel(model, device_ids=gpus).cuda()
 
     # prepare data
     test_size = (config.TEST.IMAGE_SIZE[1], config.TEST.IMAGE_SIZE[0])
@@ -119,9 +122,9 @@ def main():
     trainloader, valloader = eval('datasets.' + config.DATASET.DATASET + ".get_loaders")(
         image_dir=config.DATASET.IMAGE_DIR,
         mask_dir=config.DATASET.MASK_DIR,
-        batch_size=test_size,
+        batch_size=config.TEST.BATCH_SIZE_PER_GPU,
         num_worker=config.WORKERS,
-        pin_memory=config.TEST.BATCH_SIZE_PER_GPU,
+        pin_memory=True,
         img_shape=test_size)
     
     start = timeit.default_timer()
