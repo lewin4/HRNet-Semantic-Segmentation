@@ -13,6 +13,7 @@ import timeit
 from tqdm import tqdm
 import numpy as np
 from PIL import Image
+import matplotlib.pyplot as plt
 
 import torch
 import torch.nn as nn
@@ -295,6 +296,9 @@ def main():
     num_iters = config.TRAIN.END_EPOCH * epoch_iters
     extra_iters = config.TRAIN.EXTRA_EPOCH * extra_epoch_iters
 
+    losses = []
+    mious = []
+
     for epoch in range(last_epoch, end_epoch):
 
         current_trainloader = extra_trainloader if epoch >= config.TRAIN.END_EPOCH else trainloader
@@ -316,7 +320,8 @@ def main():
 
         valid_loss, mean_IoU, IoU_array = validate(config, epoch,
                                                    valloader, model, writer_dict, device)
-
+        losses.append(valid_loss)
+        mious.append(mean_IoU)
         if args.local_rank <= 0:
             logger.info('=> saving checkpoint to {}'.format(
                 final_output_dir + 'checkpoint.pth.tar'))
@@ -330,6 +335,7 @@ def main():
                 best_mIoU = mean_IoU
                 torch.save(model,
                            os.path.join(final_output_dir, 'best_model.pth'))
+
             msg = 'Loss: {:.3f}, MeanIU: {: 4.4f}, Best_mIoU: {: 4.4f}'.format(
                 valid_loss, mean_IoU, best_mIoU)
             logging.info(msg)
@@ -343,6 +349,22 @@ def main():
         end = timeit.default_timer()
         logger.info('Hours: %d' % np.int((end - start) / 3600))
         logger.info('Done')
+
+        plt.plot(losses, label='val 1oss')
+        plt.title('validation loss', fontsize=12)
+        plt.xlabel('epochs', fontsize=12)
+        plt.legend(fontsize=12)
+        plt.savefig("loss.jpg")
+        # plt.show()
+        plt.close()
+
+        plt.plot(mious, label='val miou')
+        plt.title('val miou', fontsize=12)
+        plt.xlabel('epochs', fontsize=12)
+        plt.legend(fontsize=12)
+        plt.savefig("miou.jpg")
+        # plt.show()
+        plt.close()
 
 
 if __name__ == '__main__':

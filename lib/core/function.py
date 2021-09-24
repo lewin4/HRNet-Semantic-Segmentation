@@ -146,7 +146,7 @@ def validate(config, epoch, testloader, model, writer_dict, device):
         res = confusion_matrix[..., i].sum(0)
         tp = np.diag(confusion_matrix[..., i])
         IoU_array = (tp / np.maximum(1.0, pos + res - tp))
-        mean_IoU = IoU_array.mean()
+        mean_IoU = IoU_array[1:].mean()
         if dist.get_rank() <= 0:
             logging.info('{} {} {}'.format(i, IoU_array, mean_IoU))
 

@@ -33,7 +33,8 @@ class SewageDataset(Dataset):
         mask_path = os.path.join(self.mask_dir, self.images[item])
         image = np.array(Image.open(img_path))
         mask = np.array(Image.open(mask_path), dtype=np.float32)
-
+        if len(mask.shape) == 3:
+            mask = mask[:, :, 0]
 
         if self.transform is not None:
             augmentations = self.transform(image=image, mask=mask)
@@ -55,10 +56,10 @@ def get_loaders(image_dir,
                 val_transform=None,
                 ):
     if train_transform is None:
+        base_image_size = config.DATASET.BASE_IMAGE_SIZE
         train_transform = A.Compose(
             [
-                A.Resize(config.DATASET.BASE_IMAGE_SIZE[1],
-                         config.DATASET.BASE_IMAGE_SIZE[0]),
+                A.Resize(base_image_size[1], base_image_size[0]),
                 A.RandomCrop(height=img_shape[0], width=img_shape[1]),
                 A.HorizontalFlip(p=0.5),
                 A.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
