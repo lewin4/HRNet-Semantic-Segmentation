@@ -11,6 +11,7 @@ import time
 import numpy as np
 import numpy.ma as ma
 from tqdm import tqdm
+from PIL import Image
 
 import torch
 import torch.nn as nn
@@ -98,14 +99,14 @@ def train(config, epoch, num_epoch, epoch_iters, base_lr,
     writer_dict['train_global_steps'] = global_steps + 1
 
 
-def validate(config, epoch, testloader, model, writer_dict, device):
+def validate(config, epoch, valloader, model, writer_dict, device):
     model.eval()
     ave_loss = AverageMeter()
     nums = config.MODEL.NUM_OUTPUTS
     confusion_matrix = np.zeros(
         (config.DATASET.NUM_CLASSES, config.DATASET.NUM_CLASSES, nums))
     with torch.no_grad():
-        progress_data = tqdm(testloader, desc=f"Val #{epoch}")
+        progress_data = tqdm(valloader, desc=f"Val #{epoch}")
         for idx, batch in enumerate(progress_data):
             image, label = batch
             size = label.size()
@@ -247,18 +248,37 @@ def test(config, test_dataset, testloader, model,
                 test_dataset.save_pred(pred, sv_path, name)
 
 
-def just_predict(config, model: nn.Module, dataloader, predict_num: int):
+def get_palette(n):
+    palette = [0] * (n * 3)
+    for j in range(0, n):
+        lab = j
+        palette[j * 3 + 0] = 0
+        palette[j * 3 + 1] = 0
+        palette[j * 3 + 2] = 0
+        i = 0
+        while lab:
+            palette[j * 3 + 0] |= (((lab >> 0) & 1) << (7 - i))
+            palette[j * 3 + 1] |= (((lab >> 1) & 1) << (7 - i))
+            palette[j * 3 + 2] |= (((lab >> 2) & 1) << (7 - i))
+            i += 1
+            lab >>= 3
+    return palette
+
+def just_predict(config, model: nn.Module, dataloader,
+                 predict_num: int, save_seg_image: bool, sv_dir: str):
     """
     从dataloader中选取指定数量的图片，预测图片
     :param config:配置文件
     :param model:模型, nn.model
     :param dataloader:dataloader
     :param predict_num:预测的图片数量
+    :param save_seg_image:是否保存预测图片
+    :param sv_dir:输出目录
     :return:None
     """
     model.eval()
     with torch.no_grad():
-        for _, batch in enumerate(tqdm(dataloader)):
+        for i, batch in enumerate(tqdm(dataloader)):
             predict_num -= 1
             if predict_num < 0:
                 break
@@ -274,7 +294,18 @@ def just_predict(config, model: nn.Module, dataloader, predict_num: int):
             pred = model(image)
 
             if pred.size()[-2] != size[0] or pred.size()[-1] != size[1]:
-                pred = F.interpolate(
+                preds = F.interpolate(
                     pred, size[-2:],
                     mode='bilinear', align_corners=config.MODEL.ALIGN_CORNERS
                 )
+            if save_seg_image:
+                sv_path = os.path.join(sv_dir, 'test_results')
+                if not os.path.exists(sv_path):
+                    os.mkdir(sv_path)
+                palette = get_palette(256)
+                preds = np.asarray(np.argmax(preds.cpu(), axis=1), dtype=np.uint8)
+                for j in range(preds.shape[0]):
+                    save_img = Image.fromarray(pred)
+                    save_img.putpalette(palette)
+                    save_img.save(os.path.join(sv_path,  str(i)+"_"+str(j)+ '.png'))
+

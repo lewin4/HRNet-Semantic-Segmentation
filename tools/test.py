@@ -147,7 +147,7 @@ def main():
     #          model,
     #          sv_dir=final_output_dir)
 
-    just_predict(config, model, valloader, 30)
+    just_predict(config, model, valloader, 30, save_seg_image=True, )
 
     end = timeit.default_timer()
     logger.info('Mins: %d' % np.int((end-start)/60))
